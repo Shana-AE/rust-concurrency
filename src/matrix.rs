@@ -2,6 +2,8 @@ use anyhow::Result;
 use std::fmt::{Debug, Display};
 use std::ops::{Add, AddAssign, Mul};
 
+use crate::Vector;
+
 pub struct Matrix<T> {
     data: Vec<T>, // for better performance, did not use nest Vec,
     row: usize,
@@ -28,6 +30,22 @@ where
         row: a.row,
         col: b.col,
     })
+}
+
+pub fn dot_product<T>(a: Vector<T>, b: Vector<T>) -> Result<T>
+where
+    T: Copy + Default + Add<Output = T> + AddAssign + Mul<Output = T>,
+{
+    if a.len() != b.len() {
+        anyhow::bail!("Dot product error: a.len != b.len");
+    }
+
+    let mut sum = T::default();
+    for i in 0..a.len() {
+        sum += a[i] * b[i];
+    }
+
+    Ok(sum)
 }
 
 impl<T> Display for Matrix<T>
