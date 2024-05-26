@@ -139,6 +139,16 @@ impl<T> Matrix<T> {
     }
 }
 
+impl<T> Mul for Matrix<T>
+where
+    T: Display + Mul<Output = T> + Add<Output = T> + AddAssign + Default + Copy + Send + 'static,
+{
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        multiply(&self, &rhs).expect("Matrix multiply error")
+    }
+}
+
 impl<T> MsgInput<T> {
     pub fn new(idx: usize, row: Vector<T>, col: Vector<T>) -> Self {
         Self { idx, row, col }
@@ -166,7 +176,7 @@ mod tests {
     fn test_matrix_multiply() {
         let a = Matrix::new([1, 2, 3, 4], 2, 2);
         let b = Matrix::new([1, 2, 3, 4], 2, 2);
-        let c = multiply(&a, &b).unwrap();
+        let c = a * b;
         assert_eq!(c.row, 2);
         assert_eq!(c.col, 2);
         assert_eq!(c.data, [7, 10, 15, 22]);
@@ -179,5 +189,21 @@ mod tests {
         assert_eq!(c.col, 3);
         assert_eq!(c.data, [9, 12, 15, 19, 26, 33]);
         assert_eq!(format!("{c}"), "{9 12 15, 19 26 33}");
+    }
+
+    #[test]
+    fn test_a_can_not_multiply_b() {
+        let a = Matrix::new([1, 2, 3, 4, 5, 6], 2, 3);
+        let b = Matrix::new([1, 2, 3, 4], 2, 2);
+        let c = multiply(&a, &b);
+        assert!(c.is_err())
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_a_can_not_multiply_b_panic() {
+        let a = Matrix::new([1, 2, 3, 4, 5, 6], 2, 3);
+        let b = Matrix::new([1, 2, 3, 4], 2, 2);
+        let _c = a * b;
     }
 }
