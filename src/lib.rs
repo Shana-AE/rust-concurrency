@@ -1,5 +1,5 @@
 mod matrix;
 mod vector;
 
-pub use matrix::{dot_product, multiply, Matrix};
-pub use vector::Vector;
+pub use matrix::{multiply, Matrix};
+pub use vector::{dot_product, Vector};
