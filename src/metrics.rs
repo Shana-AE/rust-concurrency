@@ -1,14 +1,10 @@
-use anyhow::{anyhow, Result};
-use core::fmt;
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    sync::{Arc, RwLock},
-};
+use anyhow::Result;
+use dashmap::DashMap;
+use std::{fmt::Display, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct Metrics {
-    data: Arc<RwLock<HashMap<String, i64>>>,
+    data: Arc<DashMap<String, i64>>,
 }
 
 impl Default for Metrics {
@@ -20,34 +16,25 @@ impl Default for Metrics {
 impl Metrics {
     pub fn new() -> Self {
         Self {
-            data: Arc::new(RwLock::new(HashMap::new())),
+            data: Arc::new(DashMap::new()),
         }
     }
 
     pub fn inc(&self, key: impl Into<String>) -> Result<()> {
-        let mut data = self
-            .data
-            .write()
-            .map_err(|e| anyhow!("Metrics inc error: {}", e))?;
-        let count = data.entry(key.into()).or_insert(0);
+        let mut count = self.data.entry(key.into()).or_insert(0);
         *count += 1;
         Ok(())
     }
 
-    pub fn snapshot(&self) -> Result<HashMap<String, i64>> {
-        let data = self
-            .data
-            .read()
-            .map_err(|e| anyhow!("Metrics snapshot error: {}", e))?;
-        Ok(data.clone())
+    pub fn snapshot(&self) -> Result<DashMap<String, i64>> {
+        Ok((*self.data).clone())
     }
 }
 
 impl Display for Metrics {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let data = self.data.read().map_err(|_e| fmt::Error {})?;
-        for (key, value) in data.iter() {
-            writeln!(f, "{}: {}", key, value)?;
+        for entry in self.data.iter() {
+            writeln!(f, "{}: {}", entry.key(), entry.value())?;
         }
         Ok(())
     }
